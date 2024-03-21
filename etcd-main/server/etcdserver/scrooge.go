@@ -80,10 +80,14 @@ func (s *EtcdServer) WriteScrooge() {
 		fmt.Println("Sequence number reset!")
 	}()
 
-	closePipeTimer := time.NewTimer(900 * time.Second)
+	closePipeTimer := time.NewTimer(140 * time.Second)
 	go func() {
+        startTime = time.Now()
 		<-closePipeTimer.C
-		openWritePipe.Close()
+		fmt.Println("Sequence number: ", sequenceNumber)
+        endTime := time.Since(startTime)
+		fmt.Println("Elapsed time: ", endTime)
+        openWritePipe.Close()
 		os.Exit(0)
 	}()
 
@@ -112,7 +116,6 @@ func (s *EtcdServer) WriteScrooge() {
 		// endTime := time.Since(startTime)
 		// if endTime > 65*time.Second {
 		// 	openWritePipe.Close()
-		// 	fmt.Println("Write Pipe Closed!")
 		// }
 	}
 }
