@@ -18,6 +18,7 @@ import (
 	"flag"
 	"strings"
 
+	"go.etcd.io/etcd/server/v3/etcdserver/api/snap"
 	"go.etcd.io/raft/v3/raftpb"
 )
 
@@ -42,7 +43,7 @@ func main() {
 
 	// startTimeC := make(chan time.Time)
 	// defer close(startTimeC)
-	
+
 	// raft provides a commit stream for the proposals from the http api
 	var kvs *kvstore
 	getSnapshot := func() ([]byte, error) { return kvs.getSnapshot() }

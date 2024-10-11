@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	// "strings"
 	"sync"
 	"sync/atomic"
@@ -51,23 +52,22 @@ type kvstore struct {
 	openPipe       *os.File      // pipe for writing to Scrooge
 	reader         *bufio.Reader // local reader TODO
 	openOutputPipe *os.File      // pipe for reading to Scrooge
-
-	totalTime	   time.Duration
+	totalTime      time.Duration
 }
 
 type kv struct {
-	Key 	  string
-	Val 	  string
+	Key       string
+	Val       string
 	StartTime time.Time
-	SeqNo	  uint64
+	SeqNo     uint64
 }
 
 func newKVStore(snapshotter *snap.Snapshotter, rawData chan []byte, proposeC chan<- string, commitC <-chan *commit, errorC <-chan error) *kvstore {
 	s := &kvstore{
-		rawData: 	 	rawData, 
-		proposeC:    	proposeC, 
-		kvStore:     	make(map[string]string), 
-		snapshotter: 	snapshotter, 
+		rawData:     rawData,
+		proposeC:    proposeC,
+		kvStore:     make(map[string]string),
+		snapshotter: snapshotter,
 		// sequenceNumber: 0,
 		// startTime: 		make([]time.Time, 10000),
 		// elapsedTime:	make([]time.Duration, 10000),
@@ -109,14 +109,12 @@ func newKVStore(snapshotter *snap.Snapshotter, rawData chan []byte, proposeC cha
 
 func (s *kvstore) timeTracker() {
 	TT := 120 * time.Second // Total experiment time
-	WT := 30 * time.Second // Warm up time
-
-
+	WT := 30 * time.Second  // Warm up time
 
 	timerTT := time.NewTimer(TT)
 	timerWT := time.NewTimer(WT)
 	// fmt.Println("Start warm up")
-	
+
 	var warmupCount uint64
 	var totalCount uint64
 	go func() {
@@ -131,7 +129,7 @@ func (s *kvstore) timeTracker() {
 		fmt.Println("Total requests at end of warm up: ", warmupCount)
 		fmt.Println("Total requests at end of experiment: ", totalCount)
 		fmt.Println("Total elapsed time: ", s.totalTime)
-		fmt.Println("Average latency: ", time.Duration(int64(s.totalTime) / int64(totalCount)))
+		fmt.Println("Average latency: ", time.Duration(int64(s.totalTime)/int64(totalCount)))
 
 		os.Exit(0)
 	}()
@@ -174,9 +172,9 @@ func (s *kvstore) Propose(k string, v string) {
 	startTime := time.Now()
 
 	newKv := kv{
-		Key:		k,
-		Val:		v,
-		StartTime:  startTime,
+		Key:       k,
+		Val:       v,
+		StartTime: startTime,
 	}
 
 	if err := gob.NewEncoder(&buf).Encode(newKv); err != nil {
@@ -206,22 +204,21 @@ func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error) {
 
 		for _, data := range commit.data {
 			var dataKv kv
-			
+
 			dec := gob.NewDecoder(bytes.NewBuffer([]byte(data)))
 			if err := dec.Decode(&dataKv); err != nil {
 				log.Fatalf("raftexample: could not decode message (%v)", err)
 			}
 
 			// Why mutex since only one thread reading commits?
-			// s.mu.Lock()
-			// s.kvStore[dataKv.Key] = dataKv.Val
-			// s.mu.Unlock()
+			s.mu.Lock()
+			s.kvStore[dataKv.Key] = dataKv.Val
+			s.mu.Unlock()
 
 			seqNo := atomic.AddUint64(&sequenceNumber, 1) - 1
 			// s.dummy(seqNo)
 
 			s.sendScrooge(dataKv, seqNo)
-
 
 			// fmt.Printf("-------- Latency Data starts --------\n\n\n")
 
@@ -234,7 +231,6 @@ func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error) {
 			// fmt.Println("Total elapsed time: ", s.totalTime)
 
 			// fmt.Printf("\n\n\n-------- Latency Data ends --------\n")
-			
 		}
 		close(commit.applyDoneC)
 	}
@@ -317,4 +313,3 @@ func (s *kvstore) recoverFromSnapshot(snapshot []byte) error {
 func (s *kvstore) dummy(seqNo uint64) {
 	return
 }
-
