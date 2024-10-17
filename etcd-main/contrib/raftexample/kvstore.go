@@ -16,7 +16,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/gob"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -62,7 +64,14 @@ type kv struct {
 	SeqNo     uint64
 }
 
-func newKVStore(snapshotter *snap.Snapshotter, rawData chan []byte, proposeC chan<- string, commitC <-chan *commit, errorC <-chan error) *kvstore {
+const (
+	path_to_scrooge_input_pipe  = "/tmp/scrooge-input"
+	path_to_scrooge_output_pipe = "/tmp/scrooge-output"
+	path_to_ccf_output          = "/tmp/CCF.csv"
+)
+
+// this is what scrooge is using
+func newKVStore(snapshotter *snap.Snapshotter, rawData chan []byte, proposeC chan<- string, commitC <-chan *commit, errorC <-chan error, is_sending_dr_txns bool, is_sending_ccf_txns bool) *kvstore {
 	s := &kvstore{
 		rawData:     rawData,
 		proposeC:    proposeC,
@@ -84,25 +93,25 @@ func newKVStore(snapshotter *snap.Snapshotter, rawData chan []byte, proposeC cha
 		}
 	}
 
-	go s.ScroogeReader(path_to_opipe)
-
 	// create write pipe
-	err = ipc.CreatePipe(path_to_pipe)
+	err = ipc.CreatePipe(path_to_scrooge_input_pipe)
 	if err != nil {
 		print("Unable to open input pipe: %v", err, "\n")
 	}
 	print("Input pipe made", "\n")
 
 	// open pipe writer
-	s.writer, s.openPipe, err = ipc.OpenPipeWriter(path_to_pipe)
+	s.writer, s.openPipe, err = ipc.OpenPipeWriter(path_to_scrooge_input_pipe)
 	if err != nil {
 		print("Unable to open pipe writer: %v", err, "\n")
 	}
 	// print("passed the openpipewriter ", "\n")
 
-	go s.readCommits(commitC, errorC) // go routine for sending input to Scrooge
+	go s.readCommits(commitC, errorC, is_sending_dr_txns, is_sending_ccf_txns) // go routine for sending input to Scrooge
 
 	// go s.timeTracker()
+
+	go s.ScroogeReader(path_to_scrooge_output_pipe)
 
 	return s
 }
@@ -137,21 +146,39 @@ func (s *kvstore) timeTracker() {
 
 func (s *kvstore) ScroogeReader(path_to_opipe string) {
 	var err error
+
 	// create read pipe
 	err = ipc.CreatePipe(path_to_opipe)
 	if err != nil {
 		fmt.Printf("Unable to open output pipe: %v", err, "\n")
+	} else {
+		print("Successfully created output pipe", "\n")
 	}
-	print("Output pipe made", "\n")
 
-	// open pipe reader
+	err = os.Remove(path_to_ccf_output)
+	if err != nil {
+		fmt.Printf("Unable to remove CCF output: %v", err, "\n")
+	} else {
+		fmt.Printf("Successfully removed CCF output")
+	}
+
+	ccf_file, fileErr := os.OpenFile(path_to_ccf_output, os.O_WRONLY, 0777)
+	if fileErr != nil {
+		fmt.Println("Cannot open pipe for writing:", fileErr)
+	} else {
+		fmt.Printf("Successfully opened CCF output for writing")
+	}
+
+	// open writer to the ccf output file
+	ccf_output_writer := bufio.NewWriter(ccf_file)
+
+	// open reader of the scrooge-output
 	s.reader, s.openOutputPipe, err = ipc.OpenPipeReader(path_to_opipe)
 	if err != nil {
 		print("Unable to open pipe reader: %v", err, "\n")
 	}
-	// print("passed the openpipereader ", "\n")
 
-	s.receiveScrooge()
+	s.receiveScrooge(ccf_output_writer, s.reader)
 }
 
 func (s *kvstore) Lookup(key string) (string, bool) {
@@ -184,8 +211,7 @@ func (s *kvstore) Propose(k string, v string) {
 	s.proposeC <- buf.String()
 }
 
-func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error) {
-
+func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error, is_sending_dr_txns bool, is_sending_ccf_txns bool) {
 	for commit := range commitC {
 		if commit == nil {
 			// signaled to load snapshot
@@ -218,7 +244,7 @@ func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error) {
 			seqNo := atomic.AddUint64(&sequenceNumber, 1) - 1
 			// s.dummy(seqNo)
 
-			s.sendScrooge(dataKv, seqNo)
+			s.sendScrooge(dataKv, seqNo, is_sending_dr_txns, is_sending_ccf_txns)
 
 			// fmt.Printf("-------- Latency Data starts --------\n\n\n")
 
@@ -243,8 +269,34 @@ func (s *kvstore) readCommits(commitC <-chan *commit, errorC <-chan error) {
 	}
 }
 
-func (s *kvstore) sendScrooge(dataK kv, seqNo uint64) {
-	payload := []byte(dataK.Val)
+func (s *kvstore) sendScrooge(dataK kv, seqNo uint64, sending_dr_txns bool, sending_ccf_txns bool) {
+	var payload []byte
+	var err error
+
+	if sending_dr_txns {
+		keyValueProto := &scrooge.KeyValue{
+			Key:   dataK.Key,
+			Value: dataK.Val,
+		}
+		payload, err = proto.Marshal(keyValueProto)
+		if err != nil {
+			print("cannot searilize KeyValue proto")
+		}
+	} else if sending_ccf_txns {
+		md5hash := md5.Sum([]byte(dataK.Val))
+		valueHashStr := hex.EncodeToString(md5hash[:])
+		keyValueHashProto := &scrooge.KeyValueHash{
+			Key:          dataK.Key,
+			ValueMd5Hash: valueHashStr,
+		}
+
+		payload, err = proto.Marshal(keyValueHashProto)
+		if err != nil {
+			print("cannot searilize KeyValue proto")
+		}
+	} else {
+		payload = []byte(dataK.Val)
+	}
 
 	request := &scrooge.ScroogeRequest{
 		Request: &scrooge.ScroogeRequest_SendMessageRequest{
@@ -259,7 +311,6 @@ func (s *kvstore) sendScrooge(dataK kv, seqNo uint64) {
 	}
 	// fmt.Printf("Actual data: %v\nActual payload size: %v\n", dataK.Val, len(payload))
 
-	var err error
 	requestBytes, err := proto.Marshal(request)
 
 	if err == nil {
@@ -272,13 +323,51 @@ func (s *kvstore) sendScrooge(dataK kv, seqNo uint64) {
 	}
 }
 
-func (s *kvstore) receiveScrooge() {
-	for true {
-		ipc.UsePipeReader(s.reader)
-		// fmt.Println("Reading done")
-		// if err != nil {
-		// 	print("Unable to use pipe reader")
-		// }
+func (s *kvstore) receiveScrooge(ccf_output_writer *bufio.Writer, scrooge_output_pipe_reader *bufio.Reader) {
+	var scroogeTransfer scrooge.ScroogeTransfer
+
+	for {
+		pipeData := ipc.UsePipeReader(s.reader)
+		err := proto.Unmarshal(pipeData, &scroogeTransfer)
+		if err != nil {
+			print("Error deserializing ScroogeTransfer")
+		}
+
+		switch transferType := scroogeTransfer.Transfer.(type) {
+		case *scrooge.ScroogeTransfer_KeyValueHash:
+			// Handle CCF usecase
+			kvHash := scroogeTransfer.GetKeyValueHash()
+			s.mu.Lock()
+			localVal, ok := s.kvStore[kvHash.Key]
+			s.mu.Unlock()
+
+			if ok {
+				md5hash := md5.Sum([]byte(localVal))
+				localMd5HashString := hex.EncodeToString(md5hash[:])
+				if localMd5HashString == kvHash.ValueMd5Hash {
+					ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + "," + localMd5HashString + ",AGREE\n")
+				} else {
+					ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + "," + localMd5HashString + ",DISAGREE\n")
+				}
+			} else {
+				ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + ",,NO_VALUE\n")
+			}
+
+		case *scrooge.ScroogeTransfer_KeyValueUpdate:
+			// handle DR usecase
+			kvUpdate := scroogeTransfer.GetKeyValueUpdate()
+			s.mu.Lock()
+			s.kvStore[kvUpdate.Key] = kvUpdate.Value
+			s.mu.Unlock()
+		case *scrooge.ScroogeTransfer_CommitAcknowledgment:
+			commitAcknowledgment := scroogeTransfer.GetCommitAcknowledgment()
+			print("Received scrooge commit acknolwdgment ", commitAcknowledgment.SequenceNumber)
+		case *scrooge.ScroogeTransfer_UnvalidatedCrossChainMessage:
+			unvalidatedCrossChainMessage := scroogeTransfer.GetUnvalidatedCrossChainMessage()
+			print("Received scrooge unvalidated cross chain message ?????: ", unvalidatedCrossChainMessage.Data.MessageContent)
+		default:
+			print("Unknown Scrooge Transfer Type: ", transferType)
+		}
 	}
 }
 

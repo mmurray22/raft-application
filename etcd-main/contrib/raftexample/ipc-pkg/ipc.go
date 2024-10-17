@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
 	"go.etcd.io/etcd/v3/contrib/raftexample/scrooge"
 )
 
@@ -78,7 +79,7 @@ func OpenPipeReader(pipePath string) (*bufio.Reader, *os.File, error) {
 	}*/
 }
 
-func UsePipeReader(reader *bufio.Reader) {
+func UsePipeReader(reader *bufio.Reader) []byte {
 	// fmt.Println("Begin reading from Scrooge")
 	const numSizeBytes = 64 / 8
 
@@ -93,7 +94,7 @@ func UsePipeReader(reader *bufio.Reader) {
 	if readData == nil {
 		fmt.Println("Error: no data bytes")
 	}
-
+	return readData
 	// Determines type of Scrooge response
 	/*data := scrooge.ScroogeTransfer(readData)
 	isCommitAcknowledgment := isCommitAcknowledgment(data)
@@ -197,7 +198,7 @@ func loggedWrite(writer io.Writer, data []byte) {
 // our clean up procedure and exiting the program.
 func setupCloseHandler() {
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 	go func() {
 		<-c
 		os.Exit(0)
@@ -213,14 +214,14 @@ func doesFileExist(fileName string) bool {
 // Helper functions that determine whether data read from Scrooge is a CommitAcknowledgment or an UnvalidatedCrossChainMessage.
 func isCommitAcknowledgment(data scrooge.ScroogeTransfer) bool {
 	if data.GetCommitAcknowledgment() != nil && data.GetUnvalidatedCrossChainMessage() == nil {
-		return true;
+		return true
 	}
-	return false;
+	return false
 }
 
 func isUnvalidatedCrossChainMessage(data scrooge.ScroogeTransfer) bool {
 	if data.GetCommitAcknowledgment() == nil && data.GetUnvalidatedCrossChainMessage() != nil {
-		return true;
+		return true
 	}
-	return false;
+	return false
 }

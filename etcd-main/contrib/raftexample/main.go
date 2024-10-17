@@ -18,15 +18,7 @@ import (
 	"flag"
 	"strings"
 
-	"go.etcd.io/etcd/server/v3/etcdserver/api/snap"
 	"go.etcd.io/raft/v3/raftpb"
-)
-
-const (
-	path_to_pipe  = "/tmp/scrooge-input"
-	path_to_opipe = "/tmp/scrooge-input"
-	// path_to_pipe  = "/Users/qx/Desktop/tmp/scrooge-input"
-	// path_to_opipe = "/Users/qx/Desktop/tmp/scrooge-input"
 )
 
 func main() {
@@ -34,6 +26,8 @@ func main() {
 	id := flag.Int("id", 1, "node ID")
 	kvport := flag.Int("port", 9121, "key-value server port")
 	join := flag.Bool("join", false, "join an existing cluster")
+	is_sending_dr_txns := flag.Bool("dr_sender", false, "true if the node is sending scrooge txns to backup")
+	is_sending_ccf_txns := flag.Bool("ccf_sender", false, "true if the node is sending scrooge txn hashes to check like ccf")
 	flag.Parse()
 
 	proposeC := make(chan string)
@@ -78,6 +72,6 @@ func main() {
 		print(data, "\n")
 	}*/
 
-	kvs = newKVStore(<-snapshotterReady, rawData, proposeC, commitC, errorC)
+	kvs = newKVStore(<-snapshotterReady, rawData, proposeC, commitC, errorC, *is_sending_dr_txns, *is_sending_ccf_txns)
 	serveHTTPKVAPI(kvs, *kvport, confChangeC, errorC)
 }
