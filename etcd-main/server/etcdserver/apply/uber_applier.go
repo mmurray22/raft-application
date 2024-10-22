@@ -157,9 +157,11 @@ func (a *uberApplier) dispatch(ctx context.Context, r *pb.InternalRaftRequest, s
 	case r.Put != nil:
 		op = "Put"
 		ar.Resp, ar.Trace, ar.Err = a.applyV3.Put(ctx, nil, r.Put)
+		// I think this is where we have the new key/value
 	case r.DeleteRange != nil:
 		op = "DeleteRange"
 		ar.Resp, ar.Err = a.applyV3.DeleteRange(nil, r.DeleteRange)
+		// and where we have delete a range
 	case r.Txn != nil:
 		op = "Txn"
 		ar.Resp, ar.Trace, ar.Err = a.applyV3.Txn(ctx, r.Txn)

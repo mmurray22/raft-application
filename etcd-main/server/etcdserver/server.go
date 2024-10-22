@@ -1966,6 +1966,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 		if !needResult && raftReq.Txn != nil {
 			removeNeedlessRangeReqs(raftReq.Txn)
 		}
+		// raftReq.Put != nil -> write to pipe!!!
 		ar = s.uberApply.Apply(&raftReq, shouldApplyV3)
 	}
 
