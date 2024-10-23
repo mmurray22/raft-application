@@ -23,6 +23,10 @@ import (
 )
 
 func Main(args []string) {
+	_ = args[1] == "true" // DR sender
+	_ = args[2] == "true" // CCF sender
+	args = append(args[:1], args[3:]...)
+
 	checkSupportArch()
 
 	if len(args) > 1 {
