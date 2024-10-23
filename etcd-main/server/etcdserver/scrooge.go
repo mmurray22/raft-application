@@ -50,7 +50,7 @@ func (s *EtcdServer) ReadScrooge() {
 	// create read pipe
 	err = ipc.CreatePipe(path_to_opipe)
 	if err != nil {
-		fmt.Printf("Unable to open output pipe: %v", err, "\n")
+		fmt.Printf("Unable to open output pipe: %v\n", err)
 	} else {
 		print("Successfully created output pipe", "\n")
 	}
@@ -65,14 +65,18 @@ func (s *EtcdServer) ReadScrooge() {
 
 	err = os.Remove(path_to_ccf_output)
 	if err != nil {
-		fmt.Printf("Unable to remove CCF output: %v", err, "\n")
+		fmt.Printf("Unable to remove CCF output: %v", err)
 	} else {
 		fmt.Printf("Successfully removed CCF output")
 	}
 
+	_, err = os.Create(path_to_ccf_output)
+	if err != nil {
+		fmt.Println("Cannot create ccf file", err)
+	}
 	ccf_file, fileErr := os.OpenFile(path_to_ccf_output, os.O_WRONLY, 0777)
 	if fileErr != nil {
-		fmt.Println("Cannot open pipe for writing:", fileErr)
+		fmt.Println("Cannot open ccf file/C for writing:", fileErr)
 	} else {
 		fmt.Printf("Successfully opened CCF output for writing")
 	}
