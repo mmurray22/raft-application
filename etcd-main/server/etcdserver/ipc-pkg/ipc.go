@@ -46,42 +46,23 @@ func OpenPipeReader(pipePath string) (*os.File, error) {
 	return pipe, nil
 }
 
-func UsePipeReader(openReadPipe *os.File) {
-	reader := bufio.NewReader(openReadPipe)
+func UsePipeReader(reader *bufio.Reader) ([]byte, error) {
+	// fmt.Println("Begin reading from Scrooge")
+	const numSizeBytes = 64 / 8
 
-	for {
-		const numSizeBytes = 64 / 8
-
-		readSizeBytes, err := loggedRead(reader, numSizeBytes)
-		if err != nil {
-			break
-		}
-		if readSizeBytes == nil {
-			continue
-		}
-
-		readSize := binary.LittleEndian.Uint64(readSizeBytes[:])
-
-		readData, err := loggedRead(reader, readSize)
-		if err != nil {
-			break
-		}
-		if readData == nil {
-			fmt.Println("No Data Read!")
-		}
-
-		// unmarshal readData into ScroogeRequest, and print seq num
-		// var req scrooge.ScroogeRequest
-
-		// proto.Unmarshal(readData, &req)
-
-		// payload := string(req.GetSendMessageRequest().GetContent().GetMessageContent())
-		// seqNum := req.GetSendMessageRequest().GetContent().GetSequenceNumber()
-
-		// fmt.Println("Receive Sequence number: ", seqNum)
-		// fmt.Println("Receive Payload: ", payload)
-
+	// fmt.Println("Start logged read sizeBytes and data")
+	readSizeBytes, err := loggedRead(reader, numSizeBytes)
+	if readSizeBytes == nil {
+		fmt.Println("Error: cannot read size of message from pipe")
+		return nil, err
 	}
+	readSize := binary.LittleEndian.Uint64(readSizeBytes[:])
+
+	readData, err := loggedRead(reader, readSize)
+	if readData == nil {
+		fmt.Println("Error: cannot read the message")
+	}
+	return readData, nil
 }
 
 // Blocking call that will continously write the data pipeInput into pipePath
