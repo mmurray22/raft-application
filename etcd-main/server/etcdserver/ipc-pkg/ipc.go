@@ -52,15 +52,20 @@ func UsePipeReader(openReadPipe *os.File) {
 	for {
 		const numSizeBytes = 64 / 8
 
-		readSizeBytes := loggedRead(reader, numSizeBytes)
+		readSizeBytes, err := loggedRead(reader, numSizeBytes)
+		if err != nil {
+			break
+		}
 		if readSizeBytes == nil {
 			continue
 		}
 
 		readSize := binary.LittleEndian.Uint64(readSizeBytes[:])
 
-		readData := loggedRead(reader, readSize)
-
+		readData, err := loggedRead(reader, readSize)
+		if err != nil {
+			break
+		}
 		if readData == nil {
 			fmt.Println("No Data Read!")
 		}
@@ -112,16 +117,16 @@ func UsePipeWriter(openWritePipe *os.File, requestBytes []byte) error {
 	return nil
 }
 
-func loggedRead(reader io.Reader, numBytes uint64) []byte {
+func loggedRead(reader io.Reader, numBytes uint64) ([]byte, error) {
 	readData := make([]byte, numBytes)
 
 	bytesRead, readErr := io.ReadFull(reader, readData)
 
 	if readErr != nil {
 		fmt.Println("Pipe Reading Error: ", readErr, "[Desired Read size = ", numBytes, " Actually read size = ", bytesRead, "]")
-		return nil
+		return nil, readErr
 	} else {
-		return readData
+		return readData, nil
 	}
 }
 
