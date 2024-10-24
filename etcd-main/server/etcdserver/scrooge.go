@@ -110,6 +110,7 @@ func (s *EtcdServer) WriteScrooge() {
 		// }
 
 		sendScrooge(data, sequenceNumber, openWritePipe)
+		print("Just sent over sequence number: ", sequenceNumber)
 		sequenceNumber++
 
 		// Change duration check each time we change Scrooge experiment time
