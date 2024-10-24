@@ -82,12 +82,12 @@ func (s *EtcdServer) WriteScrooge() {
 
 	closePipeTimer := time.NewTimer(140 * time.Second)
 	go func() {
-        startTime = time.Now()
+		startTime := time.Now()
 		<-closePipeTimer.C
 		fmt.Println("Sequence number: ", sequenceNumber)
-        endTime := time.Since(startTime)
+		endTime := time.Since(startTime)
 		fmt.Println("Elapsed time: ", endTime)
-        openWritePipe.Close()
+		openWritePipe.Close()
 		os.Exit(0)
 	}()
 
