@@ -52,7 +52,7 @@ func (s *EtcdServer) ReadScrooge() {
 	if err != nil {
 		fmt.Printf("Unable to open output pipe: %v\n", err)
 	} else {
-		print("Successfully created output pipe", "\n")
+		println("Successfully created output pipe", "\n")
 	}
 
 	// open pipe reader
@@ -96,12 +96,12 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 	for {
 		pipeData, err := ipc.UsePipeReader(scrooge_output_pipe_reader)
 		if err != nil {
-			print("ERROR READING, MUST BREAK: ", err)
+			println("ERROR READING, MUST BREAK: ", err)
 			break
 		}
 		err = proto.Unmarshal(pipeData, &scroogeTransfer)
 		if err != nil {
-			print("Error deserializing ScroogeTransfer")
+			println("Error deserializing ScroogeTransfer")
 		}
 
 		switch transferType := scroogeTransfer.Transfer.(type) {
@@ -113,7 +113,7 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			txn.End()
 
 			if err != nil {
-				print("ERROR with reading key: '", kvHash.Key, "' when running CCF, err", err)
+				println("ERROR with reading key: '", kvHash.Key, "' when running CCF, err", err)
 				continue
 			}
 
@@ -128,15 +128,15 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			} else {
 				ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + ",,NO_VALUE\n")
 			}
-			print("Received unexpected key value hash. Ignoring...")
+			println("Received unexpected key value hash. Ignoring...")
 
 		case *scrooge.ScroogeTransfer_KeyValueUpdate:
 			// legacyyyy
-			print("Received unexpected key value update. Ignoring...")
+			println("Received unexpected key value update. Ignoring...")
 
 		case *scrooge.ScroogeTransfer_CommitAcknowledgment:
 			commitAcknowledgment := scroogeTransfer.GetCommitAcknowledgment()
-			print("Received scrooge commit acknolwdgment ", commitAcknowledgment.SequenceNumber)
+			println("Received scrooge commit acknolwdgment ", commitAcknowledgment.SequenceNumber)
 
 		case *scrooge.ScroogeTransfer_UnvalidatedCrossChainMessage:
 			unvalidatedCrossChainMessage := scroogeTransfer.GetUnvalidatedCrossChainMessage()
@@ -153,7 +153,7 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			}
 
 		default:
-			print("Unknown Scrooge Transfer Type: ", transferType)
+			println("Unknown Scrooge Transfer Type: ", transferType)
 		}
 	}
 }
@@ -312,7 +312,7 @@ func sendScrooge(payload []byte, seqNumber uint64, openWritePipe *os.File) {
 	if err == nil {
 		err = ipc.UsePipeWriter(openWritePipe, requestBytes)
 		if err != nil {
-			print("Unable to use pipe writer", err)
+			println("Unable to use pipe writer", err)
 		}
 	}
 }
