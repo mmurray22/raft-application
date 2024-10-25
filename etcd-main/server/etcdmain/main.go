@@ -17,6 +17,7 @@ package etcdmain
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/coreos/go-systemd/v22/daemon"
 	"go.uber.org/zap"
@@ -28,6 +29,8 @@ func Main(args []string) {
 	args = append(args[:1], args[3:]...)
 
 	checkSupportArch()
+
+	fmt.Printf("GOMAXPROCS is %d\n", runtime.GOMAXPROCS(0))
 
 	if len(args) > 1 {
 		cmd := args[1]
