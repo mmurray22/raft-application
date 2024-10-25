@@ -91,6 +91,7 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 	var scroogeTransfer scrooge.ScroogeTransfer
 
 	totalAppliedTxns := 0
+	txnsTillNextDrPrint := 0
 
 	for {
 		pipeData, err := ipc.UsePipeReader(scrooge_output_pipe_reader)
@@ -145,7 +146,11 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 				}
 			}
 			totalAppliedTxns += len(unvalidatedCrossChainMessage.Data)
-			print("Applied ", len(unvalidatedCrossChainMessage.Data), "transactions, in total: ", totalAppliedTxns, " txns applied")
+			txnsTillNextDrPrint -= len(unvalidatedCrossChainMessage.Data)
+			if txnsTillNextDrPrint < 0 {
+				txnsTillNextDrPrint += 10000
+				println("Applied ", len(unvalidatedCrossChainMessage.Data), "transactions, in total: ", totalAppliedTxns, " txns applied")
+			}
 
 		default:
 			print("Unknown Scrooge Transfer Type: ", transferType)
