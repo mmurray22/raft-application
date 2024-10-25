@@ -140,7 +140,9 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 		case *scrooge.ScroogeTransfer_UnvalidatedCrossChainMessage:
 			unvalidatedCrossChainMessage := scroogeTransfer.GetUnvalidatedCrossChainMessage()
 			for _, crossChainData := range unvalidatedCrossChainMessage.Data {
-				applyTxn(s, crossChainData.MessageContent)
+				if crossChainData.SequenceNumber > 100 {
+					applyTxn(s, crossChainData.MessageContent)
+				}
 			}
 			totalAppliedTxns += len(unvalidatedCrossChainMessage.Data)
 			print("Applied ", len(unvalidatedCrossChainMessage.Data), "transactions, in total: ", totalAppliedTxns, " txns applied")
