@@ -1858,7 +1858,7 @@ func (s *EtcdServer) apply(
 
 			//@ethan passes data to go rountine that handles writing to Scrooge
 
-			s.WriteScroogeC <- e.Data
+			// s.WriteScroogeC <- e.Data
 
 			// lg.Info("---------- Data length ----------",
 			// 	zap.Int("e.data length", len(e.Data)))
