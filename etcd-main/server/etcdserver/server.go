@@ -74,6 +74,9 @@ import (
 	"go.etcd.io/etcd/server/v3/storage/schema"
 )
 
+var txnCounter = 0
+var startTime time.Time
+
 const (
 	DefaultSnapshotCount = 10000
 
@@ -1860,6 +1863,14 @@ func (s *EtcdServer) apply(
 
 			// s.WriteScroogeC <- e.Data
 
+			if txnCounter == 0 {
+				startTime = time.Now()
+			}
+
+			txnCounter += 1
+			if txnCounter%10000 == 0 {
+				println(txnCounter, time.Since(startTime))
+			}
 			// lg.Info("---------- Data length ----------",
 			// 	zap.Int("e.data length", len(e.Data)))
 			// s.WriteScroogeC <- []byte("a")
