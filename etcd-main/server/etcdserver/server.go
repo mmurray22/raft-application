@@ -603,8 +603,8 @@ func (s *EtcdServer) start() {
 
 	//@ethan Continuously reads from and writes to Scrooge
 	// s.CreatePipe()
-	go s.ReadScrooge()
-	go s.WriteScrooge()
+	// go s.ReadScrooge()
+	// go s.WriteScrooge()
 }
 
 func (s *EtcdServer) purgeFile() {
