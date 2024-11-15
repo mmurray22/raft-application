@@ -20,9 +20,9 @@ import (
 
 const (
 	// pipes used by Scrooge
-	path_to_ipipe = "/dev/null"
+	path_to_ipipe = "/tmp/scrooge-input"
 
-	path_to_opipe = "/dev/null"
+	path_to_opipe = "/tmp/scrooge-output"
 )
 
 func (s *EtcdServer) CreatePipe() {
