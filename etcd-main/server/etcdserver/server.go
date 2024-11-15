@@ -348,7 +348,7 @@ func NewServer(cfg config.ServerConfig) (srv *EtcdServer, err error) {
 		clusterVersionChanged: notify.NewNotifier(),
 
 		//@ethan
-		WriteScroogeC: make(chan []byte, 100),
+		WriteScroogeC: make(chan []byte, 32768),
 	}
 	serverID.With(prometheus.Labels{"server_id": b.cluster.nodeID.String()}).Set(1)
 	srv.cluster.SetVersionChangedNotifier(srv.clusterVersionChanged)
