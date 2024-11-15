@@ -1868,8 +1868,8 @@ func (s *EtcdServer) apply(
 			}
 
 			txnCounter += 1
-			if txnCounter%10000 == 0 {
-				println(txnCounter, time.Since(startTime))
+			if txnCounter%100000 == 0 {
+				println(txnCounter, time.Since(startTime).Seconds())
 			}
 			// lg.Info("---------- Data length ----------",
 			// 	zap.Int("e.data length", len(e.Data)))
