@@ -54,7 +54,7 @@ func UsePipeReader(openReadPipe *os.File) {
 
 		readSizeBytes := loggedRead(reader, numSizeBytes)
 		if readSizeBytes == nil {
-			continue
+			break
 		}
 
 		readSize := binary.LittleEndian.Uint64(readSizeBytes[:])
@@ -63,6 +63,7 @@ func UsePipeReader(openReadPipe *os.File) {
 
 		if readData == nil {
 			fmt.Println("No Data Read!")
+			break
 		}
 
 		// unmarshal readData into ScroogeRequest, and print seq num
