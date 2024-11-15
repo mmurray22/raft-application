@@ -3,7 +3,6 @@ package etcdserver
 import (
 	"fmt"
 	"os"
-	"sync/atomic"
 	"time"
 
 	"go.etcd.io/etcd/server/v3/etcdserver/ipc-pkg"
@@ -71,14 +70,6 @@ func (s *EtcdServer) WriteScrooge() {
 	if err != nil {
 		fmt.Println("Unable to open pipe writer: ", err)
 	}
-
-	// Reset sequence number to 0 when setup is complete (assume that setup takes at most 15s and that real requests come later than 15s from start)
-	timer := time.NewTimer(20 * time.Second)
-	go func() {
-		<-timer.C
-		atomic.StoreUint64(&sequenceNumber, 0)
-		fmt.Println("Sequence number reset!")
-	}()
 
 	closePipeTimer := time.NewTimer(140 * time.Second)
 	go func() {
