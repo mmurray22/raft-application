@@ -603,8 +603,8 @@ func (s *EtcdServer) start() {
 
 	//@ethan Continuously reads from and writes to Scrooge
 	// s.CreatePipe()
-	// go s.ReadScrooge()
-	// go s.WriteScrooge()
+	go s.ReadScrooge()
+	go s.WriteScrooge()
 }
 
 func (s *EtcdServer) purgeFile() {
@@ -1861,7 +1861,7 @@ func (s *EtcdServer) apply(
 
 			//@ethan passes data to go rountine that handles writing to Scrooge
 
-			// s.WriteScroogeC <- e.Data
+			s.WriteScroogeC <- e.Data
 
 			if txnCounter == 0 {
 				startTime = time.Now()
