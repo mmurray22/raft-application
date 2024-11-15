@@ -1863,6 +1863,7 @@ func (s *EtcdServer) apply(
 
 			// s.WriteScroogeC <- e.Data
 
+			println("!!!!!!!!!", txnCounter)
 			if txnCounter == 0 {
 				startTime = time.Now()
 			}
