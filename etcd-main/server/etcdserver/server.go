@@ -16,6 +16,8 @@ package etcdserver
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"expvar"
 	"fmt"
@@ -33,12 +35,14 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"go.etcd.io/etcd/pkg/v3/notify"
 	"go.etcd.io/etcd/pkg/v3/runtime"
 	"go.etcd.io/etcd/server/v3/config"
 	"go.etcd.io/etcd/server/v3/etcdserver/apply"
 	"go.etcd.io/etcd/server/v3/etcdserver/errors"
+	"go.etcd.io/etcd/server/v3/etcdserver/scrooge"
 
 	"go.etcd.io/raft/v3"
 	"go.etcd.io/raft/v3/raftpb"
@@ -302,11 +306,13 @@ type EtcdServer struct {
 
 	//@ethan
 	WriteScroogeC chan []byte
+	drSender      bool
+	ccfSender     bool
 }
 
 // NewServer creates a new EtcdServer from the supplied configuration. The
 // configuration is considered static for the lifetime of the EtcdServer.
-func NewServer(cfg config.ServerConfig) (srv *EtcdServer, err error) {
+func NewServer(cfg config.ServerConfig, drSender bool, ccfSender bool) (srv *EtcdServer, err error) {
 	b, err := bootstrap(cfg)
 	if err != nil {
 		return nil, err
@@ -346,6 +352,9 @@ func NewServer(cfg config.ServerConfig) (srv *EtcdServer, err error) {
 
 		//@ethan
 		WriteScroogeC: make(chan []byte, 10000),
+
+		drSender:  drSender,
+		ccfSender: ccfSender,
 	}
 	serverID.With(prometheus.Labels{"server_id": b.cluster.nodeID.String()}).Set(1)
 	srv.cluster.SetVersionChangedNotifier(srv.clusterVersionChanged)
@@ -1856,10 +1865,6 @@ func (s *EtcdServer) apply(
 			s.setAppliedIndex(e.Index)
 			s.setTerm(e.Term)
 
-			//@ethan passes data to go rountine that handles writing to Scrooge
-
-			s.WriteScroogeC <- e.Data
-
 			// lg.Info("---------- Data length ----------",
 			// 	zap.Int("e.data length", len(e.Data)))
 			// s.WriteScroogeC <- []byte("a")
@@ -1968,7 +1973,36 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 		if !needResult && raftReq.Txn != nil {
 			removeNeedlessRangeReqs(raftReq.Txn)
 		}
-		// raftReq.Put != nil -> write to pipe!!!
+
+		if s.drSender {
+			isUsefulForDr := raftReq.Range == nil
+			if isUsefulForDr {
+				// send txn to scrooge!
+				s.WriteScroogeC <- e.Data
+			}
+		} else if s.ccfSender {
+			isPutTxn := raftReq.Put != nil
+			if isPutTxn {
+				txnKey := raftReq.Put.Key
+				txnValue := raftReq.Put.Value
+				md5hash := md5.Sum(txnValue)
+				localMd5HashString := hex.EncodeToString(md5hash[:])
+
+				keyValueHash := scrooge.KeyValueHash{
+					Key:          string(txnKey),
+					ValueMd5Hash: localMd5HashString,
+				}
+				data, err := proto.Marshal(&keyValueHash)
+				if err != nil {
+					println("Error serializing CCF message:", err)
+				} else {
+					s.WriteScroogeC <- data
+				}
+			}
+		} else {
+			// Running raft with scrooge, but no application
+			s.WriteScroogeC <- e.Data
+		}
 		ar = s.uberApply.Apply(&raftReq, shouldApplyV3)
 	}
 

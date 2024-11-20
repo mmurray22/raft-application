@@ -41,7 +41,7 @@ var (
 	dirEmpty  = dirType("empty")
 )
 
-func startEtcdOrProxyV2(args []string) {
+func startEtcdOrProxyV2(args []string, drSender bool, ccfSender bool) {
 	grpc.EnableTracing = false
 
 	cfg := newConfig()
@@ -111,7 +111,7 @@ func startEtcdOrProxyV2(args []string) {
 		)
 		switch which {
 		case dirMember:
-			stopped, errc, err = startEtcd(&cfg.ec)
+			stopped, errc, err = startEtcd(&cfg.ec, drSender, ccfSender)
 		case dirProxy:
 			lg.Panic("v2 http proxy has already been deprecated in 3.6", zap.String("dir-type", string(which)))
 		default:
@@ -126,7 +126,7 @@ func startEtcdOrProxyV2(args []string) {
 			zap.String("data-dir", cfg.ec.Dir),
 			zap.String("dir-type", string(which)),
 		)
-		stopped, errc, err = startEtcd(&cfg.ec)
+		stopped, errc, err = startEtcd(&cfg.ec, drSender, ccfSender)
 	}
 
 	if err != nil {
@@ -202,8 +202,8 @@ func startEtcdOrProxyV2(args []string) {
 }
 
 // startEtcd runs StartEtcd in addition to hooks needed for standalone etcd.
-func startEtcd(cfg *embed.Config) (<-chan struct{}, <-chan error, error) {
-	e, err := embed.StartEtcd(cfg)
+func startEtcd(cfg *embed.Config, drSender bool, ccfSender bool) (<-chan struct{}, <-chan error, error) {
+	e, err := embed.StartEtcd(cfg, drSender, ccfSender)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -24,8 +24,8 @@ import (
 )
 
 func Main(args []string) {
-	_ = args[1] == "true" // DR sender
-	_ = args[2] == "true" // CCF sender
+	drSender := args[1] == "true"  // DR sender
+	ccfSender := args[2] == "true" // CCF sender
 	args = append(args[:1], args[3:]...)
 
 	checkSupportArch()
@@ -44,7 +44,7 @@ func Main(args []string) {
 		}
 	}
 
-	startEtcdOrProxyV2(args)
+	startEtcdOrProxyV2(args, drSender, ccfSender)
 }
 
 func notifySystemd(lg *zap.Logger) {
