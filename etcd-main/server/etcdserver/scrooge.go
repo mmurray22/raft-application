@@ -128,7 +128,6 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			} else {
 				ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + ",,NO_VALUE\n")
 			}
-			println("Received unexpected key value hash. Ignoring...")
 
 		case *scrooge.ScroogeTransfer_KeyValueUpdate:
 			// legacyyyy
