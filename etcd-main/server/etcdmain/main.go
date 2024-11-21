@@ -26,6 +26,8 @@ import (
 func Main(args []string) {
 	drSender := args[1] == "true"  // DR sender
 	ccfSender := args[2] == "true" // CCF sender
+	println("drSender:", args[1], " ", drSender)
+	println("ccfSender:", args[2], " ", ccfSender)
 	args = append(args[:1], args[3:]...)
 
 	checkSupportArch()

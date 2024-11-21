@@ -2003,6 +2003,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 		} else {
 			// Running raft with scrooge, but no application
 			s.WriteScroogeC <- e.Data
+			println("?????")
 		}
 		ar = s.uberApply.Apply(&raftReq, shouldApplyV3)
 	}
