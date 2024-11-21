@@ -1992,6 +1992,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 					Key:          string(txnKey),
 					ValueMd5Hash: localMd5HashString,
 				}
+				println("KV: ", string(txnKey), string(txnValue))
 				data, err := proto.Marshal(&keyValueHash)
 				if err != nil {
 					println("Error serializing CCF message:", err)
