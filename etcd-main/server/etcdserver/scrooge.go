@@ -134,8 +134,8 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			println("Received unexpected key value update. Ignoring...")
 
 		case *scrooge.ScroogeTransfer_CommitAcknowledgment:
-			commitAcknowledgment := scroogeTransfer.GetCommitAcknowledgment()
-			println("Received scrooge commit acknolwdgment ", commitAcknowledgment.SequenceNumber)
+			// commitAcknowledgment := scroogeTransfer.GetCommitAcknowledgment()
+			// println("Received scrooge commit acknolwdgment ", commitAcknowledgment.SequenceNumber)
 
 		case *scrooge.ScroogeTransfer_UnvalidatedCrossChainMessage:
 			unvalidatedCrossChainMessage := scroogeTransfer.GetUnvalidatedCrossChainMessage()
