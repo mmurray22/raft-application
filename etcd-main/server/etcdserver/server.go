@@ -1987,7 +1987,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 				txnValue := raftReq.Put.Value
 				md5hash := md5.Sum(txnValue)
 				localMd5HashString := hex.EncodeToString(md5hash[:])
-				println("COMMIT:", len(txnKey), " :::: Val :::: ", len(txnValue), " ::::: Hash ", len(localMd5HashString))
+				println("COMMIT:", hex.EncodeToString(txnKey), " :::: Val :::: ", hex.EncodeToString(txnValue), " ::::: Hash ", localMd5HashString)
 				keyValueHash := scrooge.KeyValueHash{
 					Key:          string(txnKey),
 					ValueMd5Hash: localMd5HashString,

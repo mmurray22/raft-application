@@ -111,7 +111,7 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			txn := s.kv.Read(mvcc.ConcurrentReadTxMode, traceutil.TODO())
 			keyRange, err := txn.Range(context.TODO(), []byte(kvHash.Key), nil, mvcc.RangeOptions{Limit: 1})
 			txn.End()
-			println("READ:", len(kvHash.Key), " :::: ", len(kvHash.ValueMd5Hash))
+			println("READ:", hex.EncodeToString([]byte(kvHash.Key)), " :::: ", hex.EncodeToString([]byte(kvHash.ValueMd5Hash)))
 			if err != nil {
 				println("ERROR with reading key: '", kvHash.Key, "' when running CCF, err", err)
 				continue
