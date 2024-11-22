@@ -97,11 +97,11 @@ func OpenPipeWriter(pipePath string) (*os.File, error) {
 	return pipe, nil
 }
 
-func UsePipeWriter(openWritePipe *os.File, requestBytes []byte) error {
+func UsePipeWriter(writer io.Writer/*openWritePipe *os.File*/, requestBytes []byte) error {
 	var writeSizeBytes [8]byte
 	binary.LittleEndian.PutUint64(writeSizeBytes[:], uint64(len(requestBytes)))
 
-	writer := bufio.NewWriter(openWritePipe)
+	//writer := bufio.NewWriter(openWritePipe)
 
 	// fmt.Println("Start logged write sizeBytes and requestBytes")
 	loggedWrite(writer, writeSizeBytes[:])

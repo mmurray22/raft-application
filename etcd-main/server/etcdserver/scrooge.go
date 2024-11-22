@@ -92,6 +92,7 @@ func (s *EtcdServer) WriteScrooge() {
 	}()
 
 	// continously receives data of applied normal entries and subsequently writes the data to Scrooge
+    writer := bufio.NewWriter(openWritePipe) 
 	for data := range s.WriteScroogeC {
 		// lg.Info("######## Received data from apply(), Sending to Scrooge ########",
 		// 	zap.String("data", string(data)),
@@ -109,7 +110,7 @@ func (s *EtcdServer) WriteScrooge() {
 		// 	continue
 		// }
 
-		sendScrooge(data, sequenceNumber, openWritePipe)
+		sendScrooge(data, sequenceNumber, writer) //openWritePipe)
 		sequenceNumber++
 
 		// Change duration check each time we change Scrooge experiment time
@@ -120,7 +121,7 @@ func (s *EtcdServer) WriteScrooge() {
 	}
 }
 
-func sendScrooge(payload []byte, seqNumber uint64, openWritePipe *os.File) {
+func sendScrooge(payload []byte, seqNumber uint64, writer io.Writer) { // openWritePipe *os.File) {
 	request := &scrooge.ScroogeRequest{
 		Request: &scrooge.ScroogeRequest_SendMessageRequest{
 			SendMessageRequest: &scrooge.SendMessageRequest{
@@ -139,7 +140,7 @@ func sendScrooge(payload []byte, seqNumber uint64, openWritePipe *os.File) {
 	requestBytes, err := proto.Marshal(request)
 
 	if err == nil {
-		err = ipc.UsePipeWriter(openWritePipe, requestBytes)
+		err = ipc.UsePipeWriter(writer, requestBytes)
 		if err != nil {
 			print("Unable to use pipe writer", err)
 		}
