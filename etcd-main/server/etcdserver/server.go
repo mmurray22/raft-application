@@ -1861,7 +1861,7 @@ func (s *EtcdServer) apply(
 
 			//@ethan passes data to go rountine that handles writing to Scrooge
 
-			s.WriteScroogeC <- e.Data
+			// s.WriteScroogeC <- e.Data
 
 			if txnCounter == 0 {
 				startTime = time.Now()
