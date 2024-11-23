@@ -308,7 +308,6 @@ type EtcdServer struct {
 	WriteScroogeC chan []byte
 	drSender      bool
 	ccfSender     bool
-	numTxns       int
 }
 
 // NewServer creates a new EtcdServer from the supplied configuration. The
@@ -356,7 +355,6 @@ func NewServer(cfg config.ServerConfig, drSender bool, ccfSender bool) (srv *Etc
 
 		drSender:  drSender,
 		ccfSender: ccfSender,
-		numTxns:   0,
 	}
 	serverID.With(prometheus.Labels{"server_id": b.cluster.nodeID.String()}).Set(1)
 	srv.cluster.SetVersionChangedNotifier(srv.clusterVersionChanged)
@@ -1980,11 +1978,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 			isUsefulForDr := raftReq.Range == nil
 			if isUsefulForDr {
 				// send txn to scrooge!
-				// s.WriteScroogeC <- e.Data
-				s.numTxns += 1
-				if s.numTxns%50000 == 0 {
-					println("NUMTXNS: ", s.numTxns)
-				}
+				s.WriteScroogeC <- e.Data
 			}
 		} else if s.ccfSender {
 			isPutTxn := raftReq.Put != nil
@@ -2007,7 +2001,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 			}
 		} else {
 			// Running raft with scrooge, but no application
-			// s.WriteScroogeC <- e.Data
+			s.WriteScroogeC <- e.Data
 		}
 		ar = s.uberApply.Apply(&raftReq, shouldApplyV3)
 	}
