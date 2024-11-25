@@ -145,6 +145,6 @@ func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // op
 		if err != nil {
 			print("Unable to use pipe writer", err)
 		}
-        writer.Flush()
 	}
+    writer.Flush()
 }
