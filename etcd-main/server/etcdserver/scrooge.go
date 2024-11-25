@@ -1,10 +1,11 @@
 package etcdserver
 
 import (
-	"fmt"
+	"time"
+    "bufio"
+    "fmt"
 	"os"
 	"sync/atomic"
-	"time"
 
 	"go.etcd.io/etcd/server/v3/etcdserver/ipc-pkg"
 	"go.etcd.io/etcd/server/v3/etcdserver/scrooge"
@@ -82,7 +83,7 @@ func (s *EtcdServer) WriteScrooge() {
 
 	closePipeTimer := time.NewTimer(140 * time.Second)
 	go func() {
-        startTime = time.Now()
+        startTime := time.Now()
 		<-closePipeTimer.C
 		fmt.Println("Sequence number: ", sequenceNumber)
         endTime := time.Since(startTime)
@@ -121,7 +122,7 @@ func (s *EtcdServer) WriteScrooge() {
 	}
 }
 
-func sendScrooge(payload []byte, seqNumber uint64, writer io.Writer) { // openWritePipe *os.File) {
+func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // openWritePipe *os.File) {
 	request := &scrooge.ScroogeRequest{
 		Request: &scrooge.ScroogeRequest_SendMessageRequest{
 			SendMessageRequest: &scrooge.SendMessageRequest{
@@ -144,5 +145,6 @@ func sendScrooge(payload []byte, seqNumber uint64, writer io.Writer) { // openWr
 		if err != nil {
 			print("Unable to use pipe writer", err)
 		}
+        writer.Flush()
 	}
 }

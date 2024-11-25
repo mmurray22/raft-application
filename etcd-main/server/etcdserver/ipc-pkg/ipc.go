@@ -97,7 +97,7 @@ func OpenPipeWriter(pipePath string) (*os.File, error) {
 	return pipe, nil
 }
 
-func UsePipeWriter(writer io.Writer/*openWritePipe *os.File*/, requestBytes []byte) error {
+func UsePipeWriter(writer *bufio.Writer/*openWritePipe *os.File*/, requestBytes []byte) error {
 	var writeSizeBytes [8]byte
 	binary.LittleEndian.PutUint64(writeSizeBytes[:], uint64(len(requestBytes)))
 
@@ -107,7 +107,7 @@ func UsePipeWriter(writer io.Writer/*openWritePipe *os.File*/, requestBytes []by
 	loggedWrite(writer, writeSizeBytes[:])
 	loggedWrite(writer, requestBytes)
 
-	writer.Flush()
+	//writer.Flush()
 
 	return nil
 }
@@ -125,7 +125,7 @@ func loggedRead(reader io.Reader, numBytes uint64) []byte {
 	}
 }
 
-func loggedWrite(writer io.Writer, data []byte) {
+func loggedWrite(writer *bufio.Writer, data []byte) {
 	bytesWritten, writeErr := writer.Write(data)
 	if writeErr != nil {
 		fmt.Println("Pipe Writing Error: ", writeErr, "[Desired Write size = ", len(data), " Actually written size = ", bytesWritten, "]")
