@@ -134,8 +134,8 @@ func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // op
 			},
 		},
 	}
-	// fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
-	// fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
+	fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
+	fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
 
 	var err error
 	requestBytes, err := proto.Marshal(request)
