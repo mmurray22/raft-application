@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	pb "go.etcd.io/etcd/api/v3/etcdserverpb"
@@ -250,17 +249,6 @@ func (s *EtcdServer) WriteScrooge() {
 	if err != nil {
 		fmt.Println("Unable to open pipe writer: ", err)
 	}
-
-	closePipeTimer := time.NewTimer(140 * time.Second)
-	go func() {
-		startTime := time.Now()
-		<-closePipeTimer.C
-		fmt.Println("Sequence number: ", sequenceNumber)
-		endTime := time.Since(startTime)
-		fmt.Println("Elapsed time: ", endTime)
-		openWritePipe.Close()
-		os.Exit(0)
-	}()
 
 	// continously receives data of applied normal entries and subsequently writes the data to Scrooge
 	writer := bufio.NewWriterSize(openWritePipe, 32768)
