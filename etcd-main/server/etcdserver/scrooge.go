@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/server/v3/etcdserver/ipc-pkg"
-	"go.etcd.io/etcd/server/v3/etcdserver/scrooge"
-	"google.golang.org/protobuf/proto"
 )
 
 // "bytes"
@@ -118,27 +116,27 @@ func (s *EtcdServer) WriteScrooge() {
 }
 
 func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // openWritePipe *os.File) {
-	request := &scrooge.ScroogeRequest{
-		Request: &scrooge.ScroogeRequest_SendMessageRequest{
-			SendMessageRequest: &scrooge.SendMessageRequest{
-				Content: &scrooge.CrossChainMessageData{
-					MessageContent: payload,
-					SequenceNumber: seqNumber,
-				},
-				ValidityProof: []byte("substitute valididty proof"),
-			},
-		},
-	}
-	// fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
-	// fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
+	// request := &scrooge.ScroogeRequest{
+	// 	Request: &scrooge.ScroogeRequest_SendMessageRequest{
+	// 		SendMessageRequest: &scrooge.SendMessageRequest{
+	// 			Content: &scrooge.CrossChainMessageData{
+	// 				MessageContent: payload,
+	// 				SequenceNumber: seqNumber,
+	// 			},
+	// 			ValidityProof: []byte("substitute valididty proof"),
+	// 		},
+	// 	},
+	// }
+	// // fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
+	// // fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
 
-	var err error
-	requestBytes, err := proto.Marshal(request)
+	// var err error
+	// requestBytes, err := proto.Marshal(request)
 
-	if err == nil {
-		err = ipc.UsePipeWriter(writer, requestBytes)
-		if err != nil {
-			print("Unable to use pipe writer", err)
-		}
-	}
+	// if err == nil {
+	// 	err = ipc.UsePipeWriter(writer, requestBytes)
+	// 	if err != nil {
+	// 		print("Unable to use pipe writer", err)
+	// 	}
+	// }
 }
