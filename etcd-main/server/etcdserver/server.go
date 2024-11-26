@@ -1978,7 +1978,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 			isUsefulForDr := raftReq.Range == nil
 			if isUsefulForDr {
 				// send txn to scrooge!
-				// s.WriteScroogeC <- e.Data
+				s.WriteScroogeC <- e.Data
 			}
 		} else if s.ccfSender {
 			isPutTxn := raftReq.Put != nil
@@ -1996,7 +1996,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 				if err != nil {
 					println("Error serializing CCF message:", err)
 				} else {
-					// s.WriteScroogeC <- data
+					s.WriteScroogeC <- e.Data
 				}
 			}
 		} else {
