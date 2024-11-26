@@ -83,7 +83,7 @@ func (s *EtcdServer) ReadScrooge() {
 	}
 
 	// open writer to the ccf output file
-	ccf_output_writer := bufio.NewWriter(ccf_file)
+	ccf_output_writer := bufio.NewWriterSize(ccf_file, 32768)
 	// continuously receives messages from Scrooge
 	receiveScrooge(s, ccf_output_writer, reader)
 }
@@ -263,32 +263,15 @@ func (s *EtcdServer) WriteScrooge() {
 	}()
 
 	// continously receives data of applied normal entries and subsequently writes the data to Scrooge
-	writer := bufio.NewWriter(openWritePipe)
+	writer := bufio.NewWriterSize(openWritePipe, 32768)
 	for data := range s.WriteScroogeC {
-		// lg.Info("######## Received data from apply(), Sending to Scrooge ########",
-		// 	zap.String("data", string(data)),
-		// 	zap.Uint64("sequence number", 0))
-
-		// if numEntries <= 6 {
-		// 	numEntries++
-		// 	sequenceNumber--
-
-		// 	fmt.Println("Num Entries: ", numEntries, "   Sequence number: ", sequenceNumber)
-
-		// 	// if numEntries == 6 {
-		// 	// 	startTime = time.Now()
-		// 	// }
-		// 	continue
-		// }
 
 		sendScrooge(data, sequenceNumber, writer) //openWritePipe)
 		sequenceNumber++
 
-		// Change duration check each time we change Scrooge experiment time
-		// endTime := time.Since(startTime)
-		// if endTime > 65*time.Second {
-		// 	openWritePipe.Close()
-		// }
+		if sequenceNumber%100000 == 0 {
+			fmt.Println("CURRENT SN: ", sequenceNumber)
+		}
 	}
 }
 
