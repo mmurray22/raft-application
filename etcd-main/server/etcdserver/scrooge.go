@@ -114,6 +114,10 @@ func (s *EtcdServer) WriteScrooge() {
 		sendScrooge(data, sequenceNumber, writer) //openWritePipe)
 		sequenceNumber++
 
+		if sequenceNumber%100000 == 0 {
+			fmt.Println("CURRENT SN: ", sequenceNumber)
+		}
+
 		// Change duration check each time we change Scrooge experiment time
 		// endTime := time.Since(startTime)
 		// if endTime > 65*time.Second {
