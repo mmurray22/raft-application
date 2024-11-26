@@ -1,11 +1,11 @@
 package etcdserver
 
 import (
-	"time"
-    "bufio"
-    "fmt"
+	"bufio"
+	"fmt"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"go.etcd.io/etcd/server/v3/etcdserver/ipc-pkg"
 	"go.etcd.io/etcd/server/v3/etcdserver/scrooge"
@@ -83,17 +83,17 @@ func (s *EtcdServer) WriteScrooge() {
 
 	closePipeTimer := time.NewTimer(140 * time.Second)
 	go func() {
-        startTime := time.Now()
+		startTime := time.Now()
 		<-closePipeTimer.C
 		fmt.Println("Sequence number: ", sequenceNumber)
-        endTime := time.Since(startTime)
+		endTime := time.Since(startTime)
 		fmt.Println("Elapsed time: ", endTime)
-        openWritePipe.Close()
+		openWritePipe.Close()
 		os.Exit(0)
 	}()
 
 	// continously receives data of applied normal entries and subsequently writes the data to Scrooge
-    writer := bufio.NewWriter(openWritePipe) 
+	writer := bufio.NewWriter(openWritePipe)
 	for data := range s.WriteScroogeC {
 		// lg.Info("######## Received data from apply(), Sending to Scrooge ########",
 		// 	zap.String("data", string(data)),
@@ -134,8 +134,8 @@ func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // op
 			},
 		},
 	}
-	fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
-	fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
+	// fmt.Println("Send Sequence Number: ", request.GetSendMessageRequest().GetContent().GetMessageContent())
+	// fmt.Println("Send Payload: ", string(request.GetSendMessageRequest().GetContent().GetMessageContent()))
 
 	var err error
 	requestBytes, err := proto.Marshal(request)
@@ -146,5 +146,4 @@ func sendScrooge(payload []byte, seqNumber uint64, writer *bufio.Writer) { // op
 			print("Unable to use pipe writer", err)
 		}
 	}
-    writer.Flush()
 }
