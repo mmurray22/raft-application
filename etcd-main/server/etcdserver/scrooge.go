@@ -56,7 +56,7 @@ func (s *EtcdServer) WriteScrooge() {
 	var err error
 
 	// var numEntries int = 0
-	var sequenceNumber uint64 = 6
+	var sequenceNumber uint64 = 0
 
 	// lg := s.Logger()
 
