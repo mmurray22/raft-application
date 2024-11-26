@@ -84,7 +84,7 @@ func (s *EtcdServer) WriteScrooge() {
 	}()
 
 	// continously receives data of applied normal entries and subsequently writes the data to Scrooge
-	writer := bufio.NewWriter(openWritePipe)
+	writer := bufio.NewWriterSize(openWritePipe, 32768)
 	for data := range s.WriteScroogeC {
 		// lg.Info("######## Received data from apply(), Sending to Scrooge ########",
 		// 	zap.String("data", string(data)),
