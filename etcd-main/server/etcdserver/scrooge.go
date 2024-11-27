@@ -97,6 +97,7 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 		pipeData, err := ipc.UsePipeReader(scrooge_output_pipe_reader)
 		if err != nil {
 			println("ERROR READING, MUST BREAK: ", err)
+			os.Exit(1)
 			break
 		}
 		err = proto.Unmarshal(pipeData, &scroogeTransfer)
