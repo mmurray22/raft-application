@@ -83,7 +83,8 @@ func putFunc(cmd *cobra.Command, args []string) {
 	}
 	limit := rate.NewLimiter(rate.Limit(putRate), 1)
 	clients := mustCreateClients(totalClients, totalConns)
-	k, v := make([]byte, keySize), string(mustRandBytes(valSize))
+	// k, v := make([]byte, keySize), string(mustRandBytes(valSize))
+	k, v := make([]byte, keySize), strings.Repeat("!", 100)
 
 	bar = pb.New(putTotal)
 	bar.Start()
