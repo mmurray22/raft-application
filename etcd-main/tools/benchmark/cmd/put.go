@@ -85,6 +85,7 @@ func putFunc(cmd *cobra.Command, args []string) {
 	clients := mustCreateClients(totalClients, totalConns)
 	// k, v := make([]byte, keySize), string(mustRandBytes(valSize))
 	k, v := make([]byte, keySize), strings.Repeat("!", valSize)
+	keeeey := strings.Repeat("?", keySize)
 
 	bar = pb.New(putTotal)
 	bar.Start()
@@ -112,7 +113,8 @@ func putFunc(cmd *cobra.Command, args []string) {
 			} else {
 				binary.PutVarint(k, int64(rand.Intn(keySpaceSize)))
 			}
-			requests <- v3.OpPut(string(k), v)
+			// requests <- v3.OpPut(string(k), v)
+			requests <- v3.OpPut(keeeey, v)
 		}
 		close(requests)
 	}()
