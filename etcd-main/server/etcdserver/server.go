@@ -351,7 +351,7 @@ func NewServer(cfg config.ServerConfig, drSender bool, ccfSender bool) (srv *Etc
 		clusterVersionChanged: notify.NewNotifier(),
 
 		//@ethan
-		WriteScroogeC: make(chan []byte, 5000),
+		WriteScroogeC: make(chan []byte, 10000),
 
 		drSender:  drSender,
 		ccfSender: ccfSender,
