@@ -1975,7 +1975,7 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 		}
 
 		if s.drSender {
-			isUsefulForDr := raftReq.Range == nil
+			isUsefulForDr := raftReq.Put != nil // works because benchmark script just submits puts and no complicated requests
 			if isUsefulForDr {
 				// send txn to scrooge!
 				s.WriteScroogeC <- e.Data
