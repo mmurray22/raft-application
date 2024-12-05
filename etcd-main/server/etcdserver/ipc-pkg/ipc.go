@@ -57,11 +57,13 @@ func UsePipeReader(reader *bufio.Reader) ([]byte, error) {
 		return nil, err
 	}
 	readSize := binary.LittleEndian.Uint64(readSizeBytes[:])
+	fmt.Println("Read size: ", readSize)
 
 	readData, err := loggedRead(reader, readSize)
 	if readData == nil {
 		fmt.Println("Error: cannot read the message")
 	}
+	fmt.Println("Read message with size: ", len(readData))
 	return readData, nil
 }
 
@@ -97,7 +99,9 @@ func UsePipeWriter(writer io.Writer, requestBytes []byte) error {
 }
 
 func loggedRead(reader io.Reader, numBytes uint64) ([]byte, error) {
+	fmt.Println("Attempting to allocate read buffer of size", numBytes)
 	readData := make([]byte, numBytes)
+	fmt.Println("Successfully allocated buffer!", numBytes)
 
 	bytesRead, readErr := io.ReadFull(reader, readData)
 
