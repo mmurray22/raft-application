@@ -76,7 +76,7 @@ func (s *EtcdServer) ReadScrooge() {
 	}
 	ccf_file, fileErr := os.OpenFile(path_to_ccf_output, os.O_WRONLY, 0777)
 	if fileErr != nil {
-		fmt.Println("Cannot open ccf file/C for writing:", fileErr)
+		fmt.Println("Cannot open ccf file for writing:", fileErr)
 	} else {
 		fmt.Printf("Successfully opened CCF output for writing")
 	}

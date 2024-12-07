@@ -16,8 +16,6 @@ package etcdserver
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"expvar"
 	"fmt"
@@ -1985,18 +1983,15 @@ func (s *EtcdServer) applyEntryNormal(e *raftpb.Entry) {
 			if isPutTxn {
 				txnKey := raftReq.Put.Key
 				txnValue := raftReq.Put.Value
-				md5hash := md5.Sum(txnValue)
-				localMd5HashString := hex.EncodeToString(md5hash[:])
-				println("COMMIT:", hex.EncodeToString(txnKey), " :::: Val :::: ", hex.EncodeToString(txnValue), " ::::: Hash ", localMd5HashString)
-				keyValueHash := scrooge.KeyValueHash{
+				keyValueProtobuf := scrooge.KeyValueHash{
 					Key:          string(txnKey),
-					ValueMd5Hash: localMd5HashString,
+					ValueMd5Hash: string(txnValue), // value hash name is vestigal
 				}
-				_, err := proto.Marshal(&keyValueHash)
+				keyValueSerialized, err := proto.Marshal(&keyValueProtobuf)
 				if err != nil {
 					println("Error serializing CCF message:", err)
 				} else {
-					s.WriteScroogeC <- e.Data
+					s.WriteScroogeC <- keyValueSerialized
 				}
 			}
 		} else {
