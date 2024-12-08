@@ -3,8 +3,6 @@ package etcdserver
 import (
 	"bufio"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -112,22 +110,21 @@ func receiveScrooge(s *EtcdServer, ccf_output_writer *bufio.Writer, scrooge_outp
 			txn := s.kv.Read(mvcc.ConcurrentReadTxMode, traceutil.TODO())
 			keyRange, err := txn.Range(context.TODO(), []byte(kvHash.Key), nil, mvcc.RangeOptions{Limit: 1})
 			txn.End()
-			println("READ:", hex.EncodeToString([]byte(kvHash.Key)), " :::: ", hex.EncodeToString([]byte(kvHash.ValueMd5Hash)))
+			// println("READ:", hex.EncodeToString([]byte(kvHash.Key)), " :::: ", hex.EncodeToString([]byte(kvHash.ValueMd5Hash)))
 			if err != nil {
 				println("ERROR with reading key: '", kvHash.Key, "' when running CCF, err", err)
 				continue
 			}
 
 			if keyRange.Count != 0 {
-				md5hash := md5.Sum(keyRange.KVs[0].Value)
-				localMd5HashString := hex.EncodeToString(md5hash[:])
-				if localMd5HashString == kvHash.ValueMd5Hash {
-					ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + "," + localMd5HashString + ",AGREE\n")
+				localValue := keyRange.KVs[0].Value
+				if string(localValue) == kvHash.ValueMd5Hash {
+					ccf_output_writer.WriteString(kvHash.Key + ",A\n")
 				} else {
-					ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + "," + localMd5HashString + ",DISAGREE\n")
+					ccf_output_writer.WriteString(kvHash.Key + ",D\n")
 				}
 			} else {
-				ccf_output_writer.WriteString(kvHash.Key + "," + kvHash.ValueMd5Hash + ",,NO_VALUE\n")
+				ccf_output_writer.WriteString(kvHash.Key + ",N\n")
 			}
 
 		case *scrooge.ScroogeTransfer_KeyValueUpdate:
